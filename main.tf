@@ -13,8 +13,8 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "lab" {
-  name     = "azure-lab"
-  location = "West Europe"
+  name     = "azure-lab-2"
+  location = "switzerlandnorth"
 }
 
 resource "azurerm_virtual_network" "lab" {
@@ -76,4 +76,42 @@ resource "azurerm_linux_virtual_machine" "lab" {
     sku       = "22_04-lts-gen2"
     version   = "latest"
   }
+
+  
 }   
+# De Firewall (NSG)
+resource "azurerm_network_security_group" "lab" {
+  name                = "azure-lab-nsg"
+  location            = azurerm_resource_group.lab.location
+  resource_group_name = azurerm_resource_group.lab.name
+
+  security_rule {
+    name                       = "SSH"
+    priority                   = 1001
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "HTTP"
+    priority                   = 1002
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+}
+
+# Koppel de Firewall aan de server
+resource "azurerm_network_interface_security_group_association" "lab" {
+  network_interface_id      = azurerm_network_interface.lab.id
+  network_security_group_id = azurerm_network_security_group.lab.id
+}
